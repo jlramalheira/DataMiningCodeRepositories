@@ -5,7 +5,6 @@
         <data xmlns="http://www.netbeans.org/ns/web-project/3">
             <name>DataMining</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
-            <explicit-platform explicit-source-supported="true"/>
             <web-module-libraries>
                 <library dirs="200">
                     <file>${file.reference.org.eclipse.jgit-4.2.0.201601211800-r.jar}</file>
@@ -37,6 +36,14 @@
                 </library>
                 <library dirs="200">
                     <file>${file.reference.jhbasic.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.libs-bcel-5.2}</file>
+                    <path-in-war>WEB-INF/classes</path-in-war>
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.DependencyFinder.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
             </web-module-libraries>

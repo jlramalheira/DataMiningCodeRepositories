@@ -11,7 +11,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javancss.Javancss;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -47,7 +49,8 @@ public class Controller extends HttpServlet {
             String dir = "/repositories/";
 
             String path = getServletContext().getRealPath(dir);
-
+            System.out.println(path);
+/*
             File repositoriesDir = new File(path.substring(0, path.indexOf("build")).concat(dir));
 
             File files[] = repositoriesDir.listFiles();
@@ -58,17 +61,54 @@ public class Controller extends HttpServlet {
                     FileRepositoryBuilder builder = new FileRepositoryBuilder();
                     Repository repo = builder.setGitDir(new File(file.getAbsolutePath() + "/.git")).setMustExist(true).build();
                     Git git = new Git(repo);
+                    git.revert();
                     Iterable<RevCommit> log = git.log().call();
                     int counter = 0;
                     for (Iterator<RevCommit> iterator = log.iterator(); iterator.hasNext();) {
                         RevCommit rev = iterator.next();
                         System.out.println(rev.getAuthorIdent());
+
                         counter++;
                     }
                     System.out.printf("Have %d commits\n\n", counter);
                 }
             }
-            
+
+            List<File> arquivos = new ArrayList<File>();
+            File dirf = new File(files[0].getAbsolutePath());
+            if (dirf.isDirectory()) {
+                List<String> subDirectores = new ArrayList<>();
+                subDirectores.add(files[0].getAbsolutePath());
+                while (!subDirectores.isEmpty()) {
+                    dirf = new File(subDirectores.remove(0));
+                    File[] sub = dirf.listFiles();
+                    for (File f : sub) {
+                        if (f.isDirectory()) {
+                            System.out.println(f);
+                            subDirectores.add(f.getAbsolutePath() + "/");
+                        } else {
+                            arquivos.add(f);
+
+                        }
+                    }
+                }
+            }
+
+            for (File arquivo : arquivos) {
+                File f = new File(arquivo.getAbsolutePath());
+                System.out.println(f.toString());
+                Javancss javancss = new Javancss(f);
+                System.out.println("Linhas: " + javancss.getLOC());
+                System.out.println("Funcs: " + javancss.getFunctions().size());
+                String out = javancss.printFunctionNcss();
+                String s = out.substring(out.lastIndexOf("CCN:") + 4);
+                s = s.substring(0, s.indexOf('\n'));
+                System.out.println(s);
+                double d = Double.parseDouble(s);
+                System.out.println(d);
+            }
+*/
+            /*
             File f = new File("/home/joao/NetBeansProjects/DataMining/SimpleSubjectResolver.java");
             System.out.println(f.getAbsolutePath());
             System.out.println(f.toString());
@@ -81,7 +121,7 @@ public class Controller extends HttpServlet {
             System.out.println(s);
             double d = Double.parseDouble(s);
             System.out.println(d);
-
+             */
         } catch (Exception e) {
             System.out.println("Deu PAU! " + e.getMessage());
         }
