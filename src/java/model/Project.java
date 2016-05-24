@@ -17,11 +17,23 @@ import javax.persistence.Id;
  */
 @Entity
 public class Project implements Serializable {
+
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+    private String absolutePath;
+    private String uri;
+
+    public Project() {
+    }
+
+    public Project(String name, String absolutePath, String uri) {
+        this.name = name;
+        this.absolutePath = absolutePath;
+        this.uri = uri;
+    }
 
     public Long getId() {
         return id;
@@ -29,6 +41,30 @@ public class Project implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAbsolutePath() {
+        return absolutePath;
+    }
+
+    public void setAbsolutePath(String absolutePath) {
+        this.absolutePath = absolutePath;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
     @Override
@@ -55,5 +91,5 @@ public class Project implements Serializable {
     public String toString() {
         return "model.Project[ id=" + id + " ]";
     }
-    
+
 }

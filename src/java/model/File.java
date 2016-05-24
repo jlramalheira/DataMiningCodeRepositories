@@ -26,19 +26,13 @@ public class File implements Serializable {
     private double cam;
     private int nom;
     private int loc;
-    private int dam;
+    private double dam;
     private int dcc;
     private int cis;
+    private double getAvgLOCNOM;
+    private String path;
     @ManyToOne
-    private Project project;
-    
-    /*
-    
-Coesão entre os Métodos da Classe (BCEL)
-Métrica de Acesso a Dados (Dependency Finder)
-Acoplamento Direto de Classes (BCEL)
-Tamanho da Interface da Classe (Dependency Finder)
-    */
+    private Commit commit;
 
     public Long getId() {
         return id;
@@ -46,6 +40,86 @@ Tamanho da Interface da Classe (Dependency Finder)
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public double getAcc() {
+        return acc;
+    }
+
+    public void setAcc(double acc) {
+        this.acc = acc;
+    }
+
+    public double getCam() {
+        return cam;
+    }
+
+    public void setCam(double cam) {
+        this.cam = cam;
+    }
+
+    public int getNom() {
+        return nom;
+    }
+
+    public void setNom(int nom) {
+        this.nom = nom;
+    }
+
+    public int getLoc() {
+        return loc;
+    }
+
+    public void setLoc(int loc) {
+        this.loc = loc;
+    }
+
+    public double getDam() {
+        return dam;
+    }
+
+    public void setDam(double dam) {
+        this.dam = dam;
+    }
+
+    public int getDcc() {
+        return dcc;
+    }
+
+    public void setDcc(int dcc) {
+        this.dcc = dcc;
+    }
+
+    public int getCis() {
+        return cis;
+    }
+
+    public void setCis(int cis) {
+        this.cis = cis;
+    }
+
+    public double getGetAvgLOCNOM() {
+        return getAvgLOCNOM;
+    }
+
+    public void setGetAvgLOCNOM(double getAvgLOCNOM) {
+        this.getAvgLOCNOM = getAvgLOCNOM;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public Commit getCommit() {
+        return commit;
+    }
+
+    public void setCommit(Commit commit) {
+        this.commit = commit;
     }
 
     @Override
