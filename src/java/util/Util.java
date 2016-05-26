@@ -236,11 +236,11 @@ public class Util {
         for (File file : files) {
             extractAllMetrics(file, commit);
         }
-
+        int con = 0;
         for (; iterator.hasNext();) {
             rev = iterator.next();
             git.checkout().setName(rev.getName()).call();
-            System.out.println("Checkout...");
+            System.out.println("Checkout... "+ con++);
 
             commit = new Commit();
             commit.setAuthor(rev.getAuthorIdent().getName());
@@ -287,15 +287,17 @@ public class Util {
         List<Project> projects = daoProject.list();
 
         System.out.println("\n\nClonnig...");
-        
+        /*
         clearFolder(new File(path));
         for (Project project : projects) {
             System.out.println("Clone :" + project.getName());
             cloneProject(project.getUri(), project.getAbsolutePath());
         }
-        
+        */
 
-        Project p = projects.get(0);
+        Project p = new Project("Apache Commons BCEL", util.Util.path+"commons-bcel", "git://git.apache.org/commons-bcel.git");
+        daoProject.insert(p);        
+        cloneProject(p.getUri(), p.getAbsolutePath());
 
         try {
             Git git = buildGit(new File(p.getAbsolutePath()));

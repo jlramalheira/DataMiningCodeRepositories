@@ -32,7 +32,6 @@ public class Commit implements Serializable {
     private String message;
     @ManyToOne
     private Project project;
-    
 
     public Long getId() {
         return id;
@@ -42,7 +41,7 @@ public class Commit implements Serializable {
         this.id = id;
     }
 
-       public String getAuthor() {
+    public String getAuthor() {
         return author;
     }
 
@@ -79,7 +78,11 @@ public class Commit implements Serializable {
     }
 
     public void setMessage(String message) {
-        this.message = message;
+        if (message.length() > 255) {
+            this.message = message.substring(0, 255);
+        } else {
+            this.message = message;
+        }
     }
 
     @Override
@@ -106,5 +109,5 @@ public class Commit implements Serializable {
     public String toString() {
         return "model.Version[ id=" + id + " ]";
     }
-    
+
 }
