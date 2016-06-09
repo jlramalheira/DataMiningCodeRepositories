@@ -18,6 +18,7 @@ import javax.persistence.ManyToOne;
  */
 @Entity
 public class File implements Serializable {
+
     private static final long serialVersionUID = 1L;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -122,6 +123,28 @@ public class File implements Serializable {
         this.commit = commit;
     }
 
+    public boolean hasNegativeValue() {
+        if (this.acc < 0) {
+            return true;
+        }
+        if (this.cis < 0) {
+            return true;
+        }
+        if (this.dam < 0) {
+            return true;
+        }
+        if (this.loc < 0) {
+            return true;
+        }
+        if (this.nom < 0) {
+            return true;
+        }
+        if (this.getAvgLOCNOM < 0) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public int hashCode() {
         int hash = 0;
@@ -146,5 +169,5 @@ public class File implements Serializable {
     public String toString() {
         return "model.File[ id=" + id + " ]";
     }
-    
+
 }

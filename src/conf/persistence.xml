@@ -5,6 +5,7 @@
     <class>model.Commit</class>
     <class>model.File</class>
     <class>model.Project</class>
+    <class>model.PreProcessingCommit</class>
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/dm?zeroDateTimeBehavior=convertToNull"/>

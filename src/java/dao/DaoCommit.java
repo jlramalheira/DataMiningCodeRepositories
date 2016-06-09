@@ -5,7 +5,9 @@
  */
 package dao;
 
+import java.util.List;
 import model.Commit;
+import model.Project;
 
 /**
  *
@@ -15,6 +17,14 @@ public class DaoCommit extends Dao<Commit> {
 
     public DaoCommit() {
         super(Commit.class);
+    }
+
+    public List<Commit> listByProject(Project project) {
+        criteria = newCriteria();
+        return criteria
+                .andEquals("project", project)
+                .orderByAsc("date")
+                .getResultList();
     }
     
     
