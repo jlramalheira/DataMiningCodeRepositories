@@ -1,3 +1,10 @@
+<%-- 
+    Document   : results
+    Created on : Jul 2, 2016, 12:39:55 AM
+    Author     : joao
+--%>
+
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
     <head>
@@ -24,7 +31,7 @@
                     <div id="navbar" class="collapse navbar-collapse">
                         <ul class="nav navbar-nav">
                             <li><a href="#">Analisar</a></li>
-                            <li><a href="#about">Resultado</a></li>
+                            <li class="active"><a href="#about">Resultado</a></li>
                             <li><a href="#contact">Sobre</a></li>
                         </ul>
                     </div>
@@ -32,9 +39,9 @@
             </nav>
         </div>
         <div class="container margn-top">
-            <h1>Bem-vindo ao ...</h1>
-            <p class="lead">O ... é um sistema para análise de respositórios de código fonte</p>
-
+            <div class="row margn-top">
+                <h3>Resultado</h3>
+            </div>
         </div>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
         <script src="js/bootstrap.min.js"></script>

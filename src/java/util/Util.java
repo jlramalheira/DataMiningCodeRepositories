@@ -38,12 +38,15 @@ import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.eclipse.persistence.exceptions.DatabaseException;
 import weka.associations.Apriori;
 import weka.core.Instances;
+import weka.core.SelectedTag;
 
 /**
  *
  * @author joao
  */
 public class Util {
+
+    public static int fileErros;
 
     static String dir = "/repositories/";
     //String path = getServletContext().getRealPath(dir);
@@ -150,6 +153,7 @@ public class Util {
             }
         } catch (Exception e) {
             System.out.println("Problem read file: " + file.getName());
+            fileErros++;
         }
         return -1;
     }
@@ -210,6 +214,7 @@ public class Util {
         f.setNom(getNOM(file));
         f.setPath(file.getAbsolutePath());
 
+        //TEST
         daoFile.insert(f);
     }
 
@@ -226,10 +231,13 @@ public class Util {
         commit.setMessage(rev.getShortMessage());
         commit.setProject(project);
         commit.setSha(rev.getName());
-
-        daoCommit.insert(commit);
+        commit.setNumberFileErros(fileErros);
+        fileErros = 0;
 
         List<File> files = getFilesInFolder(new File(project.getAbsolutePath()));
+
+        commit.setNumberFileChanges(files.size());
+        daoCommit.insert(commit);
         for (File file : files) {
             extractAllMetrics(file, commit);
         }
@@ -246,10 +254,12 @@ public class Util {
                 commit.setMessage(rev.getShortMessage());
                 commit.setProject(project);
                 commit.setSha(rev.getName());
+                commit.setNumberFileErros(fileErros);
+                fileErros = 0;
+                files = listFilesChanges(git, rev, project);
+                commit.setNumberFileChanges(files.size());
 
                 daoCommit.insert(commit);
-
-                files = listFilesChanges(git, rev, project);
                 for (File file : files) {
                     extractAllMetrics(file, commit);
                 }
@@ -310,7 +320,7 @@ public class Util {
                 List<DiffEntry> diffs = df.scan(parent.getTree(), rev.getTree());
                 for (DiffEntry diff : diffs) {
                     if (!diff.getChangeType().name().equalsIgnoreCase("DELETE") && diff.getNewPath().endsWith(".java")) {
-                        fileNames.add(new File(project.getAbsolutePath() + diff.getNewPath()));
+                        fileNames.add(new File(project.getAbsolutePath() + "/" + diff.getNewPath()));
                     }
                 }
             }
@@ -320,18 +330,29 @@ public class Util {
         return fileNames;
     }
 
-    public static void assiciationRules(String pathFile) {
+    public static void assiciationRules(String pathFile, String fileResultPath) {
         try {
             Apriori apriori = new Apriori();
             BufferedReader reader = new BufferedReader(new FileReader(pathFile));
             Instances instances = new Instances(reader);
-            instances.setClassIndex(instances.numAttributes() - 1);
+
+            apriori.setNumRules(20);
+            apriori.setLowerBoundMinSupport(0.01);
+            apriori.setMinMetric(0.09);
+            //apriori.setMetricType(new SelectedTag(0, Apriori.TAGS_SELECTION));
+            //apriori.setUpperBoundMinSupport(1);
+            //apriori.setDelta(1);
+            //apriori.setSignificanceLevel(-1);
 
             apriori.buildAssociations(instances);
 
-            System.out.println(apriori.getAssociationRules().getNumRules());
+            PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(fileResultPath, false)));
 
-            System.out.println(apriori);
+            writer.println(apriori);
+
+            writer.flush();
+
+            writer.close();
 
         } catch (Exception e) {
             System.out.println(e);
@@ -386,61 +407,75 @@ public class Util {
         return possibilites[possibilites.length - 1];
     }
 
-    public static void generateARFF() throws IOException {
-        DaoFile daoFile = new DaoFile();
-        List<model.File> files = daoFile.list();
-        List<Commit> commits = new DaoCommit().list();
+    public static void generateARFFBucket(String filePath) throws IOException {
+        DaoPreProcessingCommit daoPreProcessingCommit = new DaoPreProcessingCommit();
 
-        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter("C:\\Users\\Joao\\Documents\\NetBeansProjects\\DataMiningCodeRepositories\\harmony.arff", false)));
-        writer.println("@relation Teste\n");
+        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath, false)));
+        writer.println("@relation DM\n");
 
-        double minAcc = daoFile.getMinAcc();
-        double maxAcc = daoFile.getMaxAcc();
-        int minNom = daoFile.getMinNom();
-        int maxNom = daoFile.getMaxNom();
-        int minLoc = daoFile.getMinLoc();
-        int maxLoc = daoFile.getMaxLoc();
-        double minDam = daoFile.getMinDam();
-        double maxDam = daoFile.getMaxDam();
-        int minCis = daoFile.getMinCis();
-        int maxCis = daoFile.getMaxCis();
-        double mingetAvgLOCNOM = daoFile.getMingetAvgLOCNOM();
-        double maxgetAvgLOCNOM = daoFile.getMaxgetAvgLOCNOM();
+        List<String> authors = daoPreProcessingCommit.listDistinctAuthors();
+        List<Integer> numberFilesChange = daoPreProcessingCommit.listDistinctNumberClass();
+        List<PreProcessingCommit> preProcessingCommits = daoPreProcessingCommit.list();
 
-        double[] disAcc = discretizeDouble(minAcc, maxAcc, 10);
-        int[] disNom = discretizeInteger(minNom, maxNom, 10);
-        int[] disLoc = discretizeInteger(minLoc, maxLoc, 10);
-        double[] disDam = discretizeDouble(minDam, maxDam, 10);
-        int[] disCis = discretizeInteger(minCis, maxCis, 10);
-        double[] disgetAvgLOCNOM = discretizeDouble(mingetAvgLOCNOM, maxgetAvgLOCNOM, 10);
+        double deltaMinAcc = daoPreProcessingCommit.getMinAcc();
+        double deltaMaxAcc = daoPreProcessingCommit.getMaxAcc();
+        int deltaMinNom = daoPreProcessingCommit.getMinNom();
+        int deltaMaxNom = daoPreProcessingCommit.getMaxNom();
+        int deltaMinLoc = daoPreProcessingCommit.getMinLoc();
+        int deltaMaxLoc = daoPreProcessingCommit.getMaxLoc();
+        double deltaMinDam = daoPreProcessingCommit.getMinDam();
+        double deltaMaxDam = daoPreProcessingCommit.getMaxDam();
+        int deltaMinCis = daoPreProcessingCommit.getMinCis();
+        int deltaMaxCis = daoPreProcessingCommit.getMaxCis();
+        double deltaMingetAvgLOCNOM = daoPreProcessingCommit.getMingetAvgLOCNOM();
+        double deltaMaxgetAvgLOCNOM = daoPreProcessingCommit.getMaxgetAvgLOCNOM();
 
-        writer.println("@attribute acc {" + Arrays.toString(disAcc).replace("[", "").replace("]", "") + "}");
-        writer.println("@attribute nom {" + Arrays.toString(disNom).replace("[", "").replace("]", "") + "}");
-        writer.println("@attribute loc {" + Arrays.toString(disLoc).replace("[", "").replace("]", "") + "}");
-        writer.println("@attribute dam {" + Arrays.toString(disDam).replace("[", "").replace("]", "") + "}");
-        writer.println("@attribute cis {" + Arrays.toString(disCis).replace("[", "").replace("]", "") + "}");
-        writer.println("@attribute getAvgLOCNOM {" + Arrays.toString(disgetAvgLOCNOM).replace("[", "").replace("]", "") + "}");
-        writer.print("@attribute commit {");
-        writer.print(commits.get(0).getId());
-        for (int i = 1; i < commits.size(); i++) {
-            writer.print("," + commits.get(i).getId());
+        double[] disAcc = discretizeDouble(deltaMinAcc, deltaMaxAcc, Define.SIZEBUCKET);
+        int[] disNom = discretizeInteger(deltaMinNom, deltaMaxNom, Define.SIZEBUCKET);
+        int[] disLoc = discretizeInteger(deltaMinLoc, deltaMaxLoc, Define.SIZEBUCKET);
+        double[] disDam = discretizeDouble(deltaMinDam, deltaMaxDam, Define.SIZEBUCKET);
+        int[] disCis = discretizeInteger(deltaMinCis, deltaMaxCis, Define.SIZEBUCKET);
+        double[] disgetAvgLOCNOM = discretizeDouble(deltaMingetAvgLOCNOM, deltaMaxgetAvgLOCNOM, Define.SIZEBUCKET);
+
+        writer.println("@attribute deltaacc {" + Arrays.toString(disAcc).replace("[", "").replace("]", "") + "}");
+        /*writer.println("@attribute deltanom {" + Arrays.toString(disNom).replace("[", "").replace("]", "") + "}");
+        writer.println("@attribute deltaloc {" + Arrays.toString(disLoc).replace("[", "").replace("]", "") + "}");
+         writer.println("@attribute deltadam {" + Arrays.toString(disDam).replace("[", "").replace("]", "") + "}");
+        writer.println("@attribute deltacis {" + Arrays.toString(disCis).replace("[", "").replace("]", "") + "}");
+        */writer.println("@attribute deltagetAvgLOCNOM {" + Arrays.toString(disgetAvgLOCNOM).replace("[", "").replace("]", "") + "}");
+         
+        writer.print("@attribute authors {");
+        writer.print("\"" + authors.get(0) + "\"");
+        for (int i = 1; i < authors.size(); i++) {
+            writer.print(",\"" + authors.get(i) + "\"");
         }
-        writer.println("}\n");
+        writer.println("}");
+        writer.print("@attribute numberClass {");
+        writer.print(numberFilesChange.get(0));
+        for (int i = 1; i < numberFilesChange.size(); i++) {
+            writer.print("," + numberFilesChange.get(i));
+        }
+        writer.println("}");
+        writer.println("@attribute type {" + Define.BUG + ", " + Define.OTHER + ", " + Define.REFACTOR + "}");
 
+        writer.println();
         writer.flush();
         writer.println("@data");
         writer.flush();
-        for (model.File file : files) {
-            if (!file.hasNegativeValue()) {
+        for (PreProcessingCommit preProcessingCommit : preProcessingCommits) {
+            if (preProcessingCommit.getNumberClass() == 0) {
                 continue;
             }
-            writer.println(getValueDiscretized(file.getAcc(), disAcc) + ","
-                    + getValueDiscretized(file.getNom(), disNom) + ","
-                    + getValueDiscretized(file.getLoc(), disLoc) + ","
-                    + getValueDiscretized(file.getDam(), disDam) + ","
-                    + getValueDiscretized(file.getCis(), disCis) + ","
-                    + getValueDiscretized(file.getGetAvgLOCNOM(), disgetAvgLOCNOM) + ","
-                    + file.getCommit().getId());
+            writer.println(getValueDiscretized(preProcessingCommit.getDeltaAAC(), disAcc) + ","
+                    /*+ getValueDiscretized(preProcessingCommit.getDeltaNOM(), disNom) + ","
+                    + getValueDiscretized(preProcessingCommit.getDeltaLOC(), disLoc) + ","
+                    + getValueDiscretized(preProcessingCommit.getDeltaDAM(), disDam) + ","
+                    + getValueDiscretized(preProcessingCommit.getDeltaCIS(), disCis) + ","
+                    */+ getValueDiscretized(preProcessingCommit.getDeltaAvgLOCNOM(), disgetAvgLOCNOM) + ","
+                     
+                    + "\"" + preProcessingCommit.getAuthor() + "\","
+                    + preProcessingCommit.getNumberClass() + ","
+                    + preProcessingCommit.getType());
         }
 
         writer.flush();
@@ -448,8 +483,157 @@ public class Util {
         writer.close();
     }
 
-    public static void associate() {
-        assiciationRules("C:\\Users\\Joao\\Documents\\NetBeansProjects\\DataMiningCodeRepositories\\harmony.arff");
+    public static void generateARFF(String filePath) throws IOException {
+        DaoPreProcessingCommit daoPreProcessingCommit = new DaoPreProcessingCommit();
+
+        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath, false)));
+        writer.println("@relation DM\n");
+
+        List<String> authors = daoPreProcessingCommit.listDistinctAuthors();
+        List<Integer> numberFilesChange = daoPreProcessingCommit.listDistinctNumberClass();
+        List<PreProcessingCommit> preProcessingCommits = daoPreProcessingCommit.list();
+        List<Double> deltaAccs = daoPreProcessingCommit.listDistinctDeltaAcc();
+        List<Integer> deltaNoms = daoPreProcessingCommit.listDistinctDeltaNom();
+        List<Integer> deltaLocs = daoPreProcessingCommit.listDistinctDeltaLoc();
+        List<Double> deltaDams = daoPreProcessingCommit.listDistinctDeltaDam();
+        List<Integer> deltaCiss = daoPreProcessingCommit.listDistinctDeltaCis();
+        List<Double> deltaAgvLocNoms = daoPreProcessingCommit.listDistinctDeltaAvgLocNom();
+
+        writer.print("@attribute deltaaac {");
+        writer.print(deltaAccs.get(0));
+        for (int i = 1; i < deltaAccs.size(); i++) {
+            writer.print("," + deltaAccs.get(i));
+        }
+        writer.println("}");
+
+        writer.print("@attribute deltanom {");
+        writer.print(deltaNoms.get(0));
+        for (int i = 1; i < deltaNoms.size(); i++) {
+            writer.print("," + deltaNoms.get(i));
+        }
+        writer.println("}");
+        writer.print("@attribute deltaloc {");
+        writer.print(deltaLocs.get(0));
+        for (int i = 1; i < deltaLocs.size(); i++) {
+            writer.print("," + deltaLocs.get(i));
+        }
+        writer.println("}");
+
+        writer.print("@attribute deltadam {");
+        writer.print(deltaDams.get(0));
+        for (int i = 1; i < deltaDams.size(); i++) {
+            writer.print("," + deltaDams.get(i));
+        }
+        writer.println("}");
+        writer.print("@attribute deltacis {");
+        writer.print(deltaCiss.get(0));
+        for (int i = 1; i < deltaCiss.size(); i++) {
+            writer.print("," + deltaCiss.get(i));
+        }
+        writer.println("}");
+        writer.print("@attribute deltaAvgLocNom {");
+        writer.print(deltaAgvLocNoms.get(0));
+        for (int i = 1; i < deltaAgvLocNoms.size(); i++) {
+            writer.print("," + deltaAgvLocNoms.get(i));
+        }
+        writer.println("}");
+
+        writer.print("@attribute authors {");
+        writer.print("\"" + authors.get(0) + "\"");
+        for (int i = 1; i < authors.size(); i++) {
+            writer.print(",\"" + authors.get(i) + "\"");
+        }
+        writer.println("}");
+        writer.print("@attribute numberClass {");
+        writer.print(numberFilesChange.get(0));
+        for (int i = 1; i < numberFilesChange.size(); i++) {
+            writer.print("," + numberFilesChange.get(i));
+        }
+        writer.println("}");
+        writer.println("@attribute type {" + Define.BUG + ", " + Define.OTHER + ", " + Define.REFACTOR + "}");
+
+        writer.println();
+        writer.flush();
+        writer.println("@data");
+        writer.flush();
+        for (PreProcessingCommit preProcessingCommit : preProcessingCommits) {
+            if (!preProcessingCommit.isValid()) {
+                continue;
+            }
+
+            writer.println(preProcessingCommit.getDeltaAAC() + ","
+                    + preProcessingCommit.getDeltaNOM() + ","
+                    + preProcessingCommit.getDeltaLOC() + ","
+                    + preProcessingCommit.getDeltaDAM() + ","
+                    + preProcessingCommit.getDeltaCIS() + ","
+                    + preProcessingCommit.getDeltaAvgLOCNOM() + ","
+                    + "\"" + preProcessingCommit.getAuthor() + "\","
+                    + preProcessingCommit.getNumberClass() + ","
+                    + preProcessingCommit.getType());
+            writer.flush();
+        }
+
+        writer.close();
+    }
+
+    public static void generateArffDisc(String filePath) throws IOException {
+        DaoPreProcessingCommit daoPreProcessingCommit = new DaoPreProcessingCommit();
+
+        PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath, false)));
+        writer.println("@relation DM\n");
+
+        List<String> authors = daoPreProcessingCommit.listDistinctAuthors();
+        List<Integer> numberFilesChange = daoPreProcessingCommit.listDistinctNumberClass();
+        List<PreProcessingCommit> preProcessingCommits = daoPreProcessingCommit.list();
+
+        writer.println("@attribute deltaaac {Up, Down, Estable}");
+        //writer.println("@attribute deltanom {Up, Down, Estable}");
+        /*
+        writer.println("@attribute deltaloc {Up, Down, Estable}");
+        writer.println("@attribute deltadam {Up, Down, Estable}");
+        writer.println("@attribute deltacis {Up, Down, Estable}");
+        */
+        writer.println("@attribute deltaAvgLocNom {Up, Down, Estable}");
+        
+        writer.print("@attribute authors {");
+        writer.print("\"" + authors.get(0) + "\"");
+        for (int i = 1; i < authors.size(); i++) {
+            writer.print(",\"" + authors.get(i) + "\"");
+        }
+        writer.println("}");
+        writer.print("@attribute numberClass {");
+        writer.print(numberFilesChange.get(0));
+        for (int i = 1; i < numberFilesChange.size(); i++) {
+            writer.print("," + numberFilesChange.get(i));
+        }
+        writer.println("}");
+        writer.println("@attribute type {" + Define.BUG + ", " + Define.OTHER + ", " + Define.REFACTOR + "}");
+
+        writer.println();
+        writer.flush();
+        writer.println("@data");
+        writer.flush();
+        for (PreProcessingCommit preProcessingCommit : preProcessingCommits) {
+            if (!preProcessingCommit.isValid()) {
+                continue;
+            }
+            writer.println(preProcessingCommit.printDeltaAAC() + ","
+                    //+ preProcessingCommit.printDeltaNOM() + ","
+                    /*+ preProcessingCommit.printDeltaLOC() + ","
+                    + preProcessingCommit.printDeltaDAM() + ","
+                    + preProcessingCommit.printDeltaCIS() + ","
+                    */+ preProcessingCommit.printDeltaAvgLOCNOM() + ","
+                    + "\"" + preProcessingCommit.getAuthor() + "\","
+                    + preProcessingCommit.getNumberClass() + ","
+                    + preProcessingCommit.getType());
+            writer.flush();
+        }
+
+        writer.close();
+    }
+
+    public static void associate(String pathArffFile) {
+        //assiciationRules(pathArffFile);
     }
 
     public static double[] getDeltas(Commit commit) {
@@ -462,7 +646,6 @@ public class Util {
         for (model.File file : files) {
             model.File oldFile = new DaoFile().getOldFile(file, commit);
             if (oldFile != null) {
-                System.out.println("???????");
                 deltas[0] += file.getAcc() - oldFile.getAcc();
                 deltas[1] += file.getNom() - oldFile.getNom();
                 deltas[2] += file.getLoc() - oldFile.getLoc();
@@ -508,15 +691,16 @@ public class Util {
 
         preProcessingCommit = preProcessingCommit(commits.get(0));
         daoPreProcessingCommit.insert(preProcessingCommit);
-         
+
         for (int i = 1; i < commits.size(); i++) {
             Commit commit = commits.get(i);
+            if (commit.getNumberFileChanges() > 0) {
+                preProcessingCommit = preProcessingCommit(commit);
 
-            preProcessingCommit = preProcessingCommit(commit);
-
-            daoPreProcessingCommit.insert(preProcessingCommit);
+                daoPreProcessingCommit.insert(preProcessingCommit);
+            }
         }
-        
+
     }
 
     public static void main(String[] args) throws IOException, GitAPIException {
@@ -537,11 +721,13 @@ public class Util {
         //
          */
  /*
+
         DaoProject daoProject = new DaoProject();
-        Project p = new Project("Apache Harmony", util.Util.path + "harmony", "git://git.apache.org/harmony.git");
+        Project p = new Project("Apache TomCat", util.Util.path + "tomcat", "git://git.apache.org/tomcat.git");
         daoProject.insert(p);
         cloneProject(p.getUri(), p.getAbsolutePath());
 
+        
         try {
             Git git = buildGit(new File(p.getAbsolutePath()));
             System.out.println("Extract info");
@@ -550,40 +736,73 @@ public class Util {
         } catch (Exception e) {
             System.out.println(e);
         }
-         */
 
+         */
+ /*
         Project p = new DaoProject().get(new Long(1));
-        preProcessing(p);
-        /*
-        Git git = buildGit(new File(path+"/abdera"));
-        Iterable<RevCommit> log = git.log().call();
-
-        System.out.println(git.branchList().call());
-
-
-        getLogAuthores(git);
-        Iterator<RevCommit> iterator = log.iterator();
-        RevCommit rev = iterator.next();
-        rev = iterator.next();
-        int c = 0;
-        /*
-        for (Iterator<RevCommit> iterator = log.iterator(); iterator.hasNext();) {
-            rev = iterator.next();
-
-            PersonIdent per = rev.getAuthorIdent();
-            Date date = per.getWhen();
-
-            c++;
-            //System.out.println(date);
-        } 
-        System.out.println(rev);
-        PersonIdent per = rev.getAuthorIdent();
-        Date date = per.getWhen();
-        System.out.println(date);
-        //git.checkout().setName(rev.getName()).call();
-
-        getLogAuthores(git);
+        System.out.println("preprocessing");
+        //preProcessing(p);
+        String filePath = path + p.getName() + "4.arff";
+        System.out.println("Gerando arff..");
+        generateARFF(filePath);
+        System.out.println(filePath);
+        assiciationRules(filePath);
          */
+        //initDb.recreateDataBase("dm", "root", "root");
+
+        List<Project> projects = new ArrayList<>();
+
+        //projects.add(new Project("Apache Abdera", util.Util.path + "abdera", "git://git.apache.org/abdera.git"));
+        projects.add(new Project("Apache Harmony", util.Util.path + "harmony", "git://git.apache.org/harmony.git"));
+        //projects.add(new Project("Apache OFBiz", util.Util.path + "ofbiz", "git://git.apache.org/ofbiz.git"));
+        //projects.add(new Project("Apache Ant", util.Util.path + "ant", "git://git.apache.org/ant.git"));
+        //projects.add(new Project("Apache Maven", util.Util.path + "maven", "git://git.apache.org/maven.git"));
+        //projects.add(new Project("Apache Tomcat", util.Util.path + "tomcat", "git://git.apache.org/tomcat.git")); //
+        //projects.add(new Project("Apache Hadoop", util.Util.path + "hadoop", "git://git.apache.org/hadoop.git"));
+        //projects.add(new Project("Apache CXF", util.Util.path + "cxf", "git://git.apache.org/cxf.git"));
+        //projects.add(new Project("Apache Derby", util.Util.path + "derby", "git://git.apache.org/derby.git"));
+        //projects.add(new Project("Apache Felix", util.Util.path + "felix", "git://git.apache.org/felix.git"));
+        
+        
+        for (Project project : projects) {
+            DaoProject daoProject = new DaoProject();
+            daoProject.insert(project);
+            System.out.println("\n\nClonnig..." + project.getName());
+            cloneProject(project.getUri(), project.getAbsolutePath());
+            try {
+                Git git = buildGit(new File(project.getAbsolutePath()));
+                System.out.println("Extract info");
+                extractInformation(git, project);
+
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+
+            System.out.println("preprocessing");
+            preProcessing(project);
+
+            String filePath = path + project.getName() + " Bucket.arff";
+            String filePathResult = path + project.getName() + " - Result Bucket.txt";
+            System.out.println("Gerando arff..");
+            generateARFFBucket(filePath);
+            System.out.println(filePath);
+            assiciationRules(filePath, filePathResult);
+
+//            initDb.recreateDataBase("dm", "root", "root");
+        }
+         
+        
+        /*
+        Project project = new DaoProject().get(new Long(1));
+        preProcessing(project);
+        String filePath = path + "Apache Hadoop disc.arff";
+        String filePathResult = path + "Apache Hadoop disc - Result.txt";
+        System.out.println("Gerando arff..");
+        generateArffDisc(filePath);
+        System.out.println(filePath);
+        assiciationRules(filePath, filePathResult);
+*/
+        
     }
 
 }

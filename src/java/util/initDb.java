@@ -9,6 +9,9 @@ import dao.DaoProject;
 import java.util.ArrayList;
 import java.util.List;
 import model.Project;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 
 /**
  *
@@ -30,6 +33,22 @@ public class initDb {
         
         for (Project project : projects) {
             daoProject.insert(project);
+        }
+    }
+    
+    public static boolean recreateDataBase(String dataBase, String user, String password) {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            String url = "jdbc:mysql://localhost";
+            Connection connection = DriverManager.getConnection(url, user, password);
+            Statement statement = connection.createStatement();
+            statement.execute("DROP DATABASE IF EXISTS " + dataBase);
+            statement.execute("CREATE DATABASE " + dataBase);
+            statement.close();
+            connection.close();
+            return true;
+        } catch (Exception ex) {
+            return false;
         }
     }
     

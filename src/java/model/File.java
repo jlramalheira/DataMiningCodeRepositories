@@ -112,7 +112,12 @@ public class File implements Serializable {
     }
 
     public void setPath(String path) {
-        this.path = path;
+        int length = path.length();
+        if (length > 255){            
+            this.path = path.substring(length - 255, length);
+        } else {
+            this.path = path;
+        }
     }
 
     public Commit getCommit() {

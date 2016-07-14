@@ -10,6 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import util.Define;
 
 /**
  *
@@ -17,10 +18,6 @@ import javax.persistence.Id;
  */
 @Entity
 public class PreProcessingCommit implements Serializable {
-    
-    public final String REFACTOR = "refactor";
-    public final String BUG = "bug";
-    public final String OTHER = "other";
 
     private static final long serialVersionUID = 1L;
     @Id
@@ -38,7 +35,7 @@ public class PreProcessingCommit implements Serializable {
 
     public PreProcessingCommit() {
     }
-    
+
     public Long getId() {
         return id;
     }
@@ -60,12 +57,15 @@ public class PreProcessingCommit implements Serializable {
     }
 
     public void setType(String message) {
-        if (message.contains("")){
-            this.type = this.REFACTOR;
-        } else if (message.contains("")){
-            this.type = this.BUG;
+        if (message.contains("refactor")) {
+            this.type = Define.REFACTOR;
+        } else if (message.contains("bug")
+                || message.contains("fix")
+                || message.contains("resolve")
+                || message.contains("issue")){
+            this.type = Define.BUG;
         } else {
-            this.type = this.OTHER;
+            this.type = Define.OTHER;
         }
     }
 
@@ -124,6 +124,60 @@ public class PreProcessingCommit implements Serializable {
     public void setDeltaAvgLOCNOM(double deltaAvgLOCNOM) {
         this.deltaAvgLOCNOM = deltaAvgLOCNOM;
     }
+    
+    public String printDeltaAAC(){
+        if (this.deltaAAC > 0){
+            return "Up";
+        } else if (this.deltaAAC < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
+    
+    public String printDeltaNOM(){
+        if (this.deltaNOM > 0){
+            return "Up";
+        } else if (this.deltaNOM < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
+    
+    public String printDeltaLOC(){
+        if (this.deltaLOC > 0){
+            return "Up";
+        } else if (this.deltaLOC < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
+    
+    public String printDeltaDAM(){
+        if (this.deltaDAM > 0){
+            return "Up";
+        } else if (this.deltaDAM < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
+    
+    public String printDeltaCIS(){
+        if (this.deltaCIS > 0){
+            return "Up";
+        } else if (this.deltaCIS < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
+    
+    public String printDeltaAvgLOCNOM(){
+        if (this.deltaAvgLOCNOM > 0){
+            return "Up";
+        } else if (this.deltaAvgLOCNOM < 0){
+            return "Down";
+        }
+        return "Estable";
+    }
 
     @Override
     public int hashCode() {
@@ -149,5 +203,15 @@ public class PreProcessingCommit implements Serializable {
     public String toString() {
         return "model.PreProcessingCommit[ id=" + id + " ]";
     }
-    
+
+    public boolean isValid() {
+        return this.numberClass != 0
+                && this.deltaAAC != 0
+                && this.deltaAvgLOCNOM != 0
+                && this.deltaCIS != 0
+                && this.deltaDAM != 0
+                && this.deltaLOC != 0
+                && this.deltaNOM != 0;
+    }
+
 }

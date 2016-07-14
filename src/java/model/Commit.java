@@ -30,6 +30,8 @@ public class Commit implements Serializable {
     @Temporal(javax.persistence.TemporalType.TIMESTAMP)
     private Date date;
     private String message;
+    private int numberFileErros;
+    private int numberFileChanges;
     @ManyToOne
     private Project project;
 
@@ -83,6 +85,22 @@ public class Commit implements Serializable {
         } else {
             this.message = message;
         }
+    }
+
+    public int getNumberFileErros() {
+        return numberFileErros;
+    }
+
+    public void setNumberFileErros(int numberFileErros) {
+        this.numberFileErros = numberFileErros;
+    }
+
+    public int getNumberFileChanges() {
+        return numberFileChanges;
+    }
+
+    public void setNumberFileChanges(int numberFileChanges) {
+        this.numberFileChanges = numberFileChanges;
     }
 
     @Override
