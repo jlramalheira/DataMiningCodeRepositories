@@ -31,7 +31,7 @@
                     <div id="navbar" class="collapse navbar-collapse">
                         <ul class="nav navbar-nav">
                             <li class="active"><a href="#">Analisar</a></li>
-                            <li><a href="#about">Resultado</a></li>
+                            <li><a href="Controller?action=results">Resultado</a></li>
                             <li><a href="#contact">Sobre</a></li>
                         </ul>
                     </div>

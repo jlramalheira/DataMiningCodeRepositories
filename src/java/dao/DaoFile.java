@@ -46,4 +46,9 @@ public class DaoFile extends Dao<File> {
         }
         return null;
     }
+
+    public int getTotFiles() {
+        return newCriteria().count().intValue();
+    }
+
 }

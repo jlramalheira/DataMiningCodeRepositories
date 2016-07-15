@@ -5,6 +5,10 @@
  */
 package controllers;
 
+import dao.DaoCommit;
+import dao.DaoFile;
+import dao.DaoPreProcessingCommit;
+import dao.DaoProject;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -15,11 +19,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javancss.Javancss;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import model.Project;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Constants;
@@ -40,90 +46,44 @@ import org.eclipse.jgit.treewalk.filter.PathFilter;
 @WebServlet(name = "Controller", urlPatterns = {"/Controller"})
 public class Controller extends HttpServlet {
 
+    RequestDispatcher rd;
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        try {
-
-            String dir = "/repositories/";
-
-            String path = getServletContext().getRealPath(dir);
-            System.out.println(path);
-/*
-            File repositoriesDir = new File(path.substring(0, path.indexOf("build")).concat(dir));
-
-            File files[] = repositoriesDir.listFiles();
-
-            if (files != null) {
-                for (File file : files) {
-
-                    FileRepositoryBuilder builder = new FileRepositoryBuilder();
-                    Repository repo = builder.setGitDir(new File(file.getAbsolutePath() + "/.git")).setMustExist(true).build();
-                    Git git = new Git(repo);
-                    git.revert();
-                    Iterable<RevCommit> log = git.log().call();
-                    int counter = 0;
-                    for (Iterator<RevCommit> iterator = log.iterator(); iterator.hasNext();) {
-                        RevCommit rev = iterator.next();
-                        System.out.println(rev.getAuthorIdent());
-
-                        counter++;
-                    }
-                    System.out.printf("Have %d commits\n\n", counter);
+        response.setCharacterEncoding("UTF-8");
+        String action = request.getParameter("action");
+        switch (action){
+            case "results":
+                List<Project> projects = new DaoProject().list();
+                for (Project project : projects) {
+                    System.out.println(project.getName());
                 }
-            }
+                DaoFile daoFile = new DaoFile();
+                DaoPreProcessingCommit daoPreProcessingCommit = new DaoPreProcessingCommit();
+                if (!projects.isEmpty()){
+                    Project project = projects.get(0);
+                    int totCommits = new DaoCommit().getTotCommit();
+                    int totFiles = daoFile.getTotFiles();
+                    int totPreProcessing = daoPreProcessingCommit.getTotPreCommits();
+                    List<Double> aacs = daoPreProcessingCommit.listAACS();                  
+                    List<Integer> qtsCommit = daoPreProcessingCommit.getNumberCommitGroupByAuthor();                  
+                    List<String> authors = daoPreProcessingCommit.getAuthorsOrderByCommits();                  
 
-            List<File> arquivos = new ArrayList<File>();
-            File dirf = new File(files[0].getAbsolutePath());
-            if (dirf.isDirectory()) {
-                List<String> subDirectores = new ArrayList<>();
-                subDirectores.add(files[0].getAbsolutePath());
-                while (!subDirectores.isEmpty()) {
-                    dirf = new File(subDirectores.remove(0));
-                    File[] sub = dirf.listFiles();
-                    for (File f : sub) {
-                        if (f.isDirectory()) {
-                            System.out.println(f);
-                            subDirectores.add(f.getAbsolutePath() + "/");
-                        } else {
-                            arquivos.add(f);
-
-                        }
-                    }
+                    request.setAttribute("project", project);
+                    request.setAttribute("totCommits", totCommits);
+                    request.setAttribute("totPreProcessing", totPreProcessing);
+                    request.setAttribute("totFiles", totFiles);
+                    request.setAttribute("aacs", aacs);
+                    request.setAttribute("qtsCommit", qtsCommit);
+                    request.setAttribute("authors", authors);
+                    
+                    rd = request.getRequestDispatcher("results.jsp");
+                    rd.forward(request, response);
+                } else {
+                    response.sendRedirect("index.html");
                 }
-            }
-
-            for (File arquivo : arquivos) {
-                File f = new File(arquivo.getAbsolutePath());
-                System.out.println(f.toString());
-                Javancss javancss = new Javancss(f);
-                System.out.println("Linhas: " + javancss.getLOC());
-                System.out.println("Funcs: " + javancss.getFunctions().size());
-                String out = javancss.printFunctionNcss();
-                String s = out.substring(out.lastIndexOf("CCN:") + 4);
-                s = s.substring(0, s.indexOf('\n'));
-                System.out.println(s);
-                double d = Double.parseDouble(s);
-                System.out.println(d);
-            }
-*/
-            /*
-            File f = new File("/home/joao/NetBeansProjects/DataMining/SimpleSubjectResolver.java");
-            System.out.println(f.getAbsolutePath());
-            System.out.println(f.toString());
-            Javancss javancss = new Javancss(f);
-            System.out.println("Linhas: " + javancss.getLOC());
-            System.out.println("Funcs: " + javancss.getFunctions().size());
-            String out = javancss.printFunctionNcss();
-            String s = out.substring(out.lastIndexOf("CCN:")+4);
-            s = s.substring(0,s.indexOf('\n'));
-            System.out.println(s);
-            double d = Double.parseDouble(s);
-            System.out.println(d);
-             */
-        } catch (Exception e) {
-            System.out.println("Deu PAU! " + e.getMessage());
+                
+                break;
         }
     }
 

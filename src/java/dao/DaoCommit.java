@@ -26,6 +26,11 @@ public class DaoCommit extends Dao<Commit> {
                 .orderByAsc("date")
                 .getResultList();
     }
+
+    public int getTotCommit() {
+        criteria = newCriteria();
+        return criteria.count().intValue();
+    }
     
     
 }

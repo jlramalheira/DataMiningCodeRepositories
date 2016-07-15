@@ -97,5 +97,21 @@ public class DaoPreProcessingCommit extends Dao<PreProcessingCommit>{
     public List<Double> listDistinctDeltaAvgLocNom() {
         return em.createNativeQuery("SELECT DISTINCT deltaAvgLOCNOM FROM PREPROCESSINGCOMMIT ORDER BY deltaAvgLOCNOM ASC").getResultList();
     }
+
+    public int getTotPreCommits() {
+        return newCriteria().count().intValue();
+    }
+
+    public List<Double> listAACS() {
+        return em.createQuery("SELECT p.deltaAAC from PreProcessingCommit p").getResultList();
+    }
+    
+    public List<Integer> getNumberCommitGroupByAuthor(){
+        return em.createNativeQuery("select count(id) as qnt from PREPROCESSINGCOMMIT group by author order by qnt desc limit 10").getResultList();
+    }
+    
+    public List<String> getAuthorsOrderByCommits(){
+        return em.createNativeQuery("select author from PREPROCESSINGCOMMIT group by author order by count(id) desc limit 10").getResultList();
+    }
     
 }
