@@ -763,7 +763,7 @@ public class Util {
         //projects.add(new Project("Apache Derby", util.Util.path + "derby", "git://git.apache.org/derby.git"));
         //projects.add(new Project("Apache Felix", util.Util.path + "felix", "git://git.apache.org/felix.git"));
         
-        
+        /*
         for (Project project : projects) {
             DaoProject daoProject = new DaoProject();
             daoProject.insert(project);
@@ -790,19 +790,30 @@ public class Util {
 
 //            initDb.recreateDataBase("dm", "root", "root");
         }
-         
+        */
         
         /*
         Project project = new DaoProject().get(new Long(1));
         preProcessing(project);
-        String filePath = path + "Apache Hadoop disc.arff";
-        String filePathResult = path + "Apache Hadoop disc - Result.txt";
+        */
+        String filePath = path + "Apache CXF.arff";
+        String filePathResult = path + "Apache CXF - Result.txt";
         System.out.println("Gerando arff..");
-        generateArffDisc(filePath);
+        //generateArffDisc(filePath);
         System.out.println(filePath);
         assiciationRules(filePath, filePathResult);
-*/
+        /*
         
+        Project p = new DaoProject().get(new Long(1+""));
+        List<Commit> commits = new DaoCommit().listByProject(p);
+        DaoFile daoFile = new DaoFile();
+        DaoCommit daoCommit = new DaoCommit();
+        for (Commit commit : commits) {
+            daoCommit.removeFiles(commit);            
+            daoCommit.remove(commit.getId());
+        }
+        new DaoProject().remove(new Long(1+""));
+*/
     }
 
 }
